@@ -274,25 +274,30 @@ def main():
 def export_to_tikzpicture(root):
     def tikz_node(node):
         if node is None:
-            return ""
-        left = tikz_node(node.left)
-        right = tikz_node(node.right)
-        s = f"[.{node.value}"
-        if node.left:
-            s += f" {left}"
-        else:
-            s += " [.$\\varnothing$ ]"
-        if node.right:
-            s += f" {right}"
-        else:
-            s += " [.$\\varnothing$ ]"
-        s += "]"
+            return "child {node {$\\varnothing$}}"
+        s = f"child {{node {{{node.value}}}"
+        if node.left or node.right:
+            s += "\n" + (tikz_node(node.left) if node.left else "child {node {$\\varnothing$}}") + "\n"
+            s += (tikz_node(node.right) if node.right else "child {node {$\\varnothing$}}") + "\n"
+        s += "}"
         return s
 
-    tikz_code = "\\begin{tikzpicture}[sibling distance=10em, level distance=4em,\n"
-    tikz_code += "every node/.style = {shape=circle, draw, align=center}]\n"
-    tikz_code += "\\Tree " + tikz_node(root) + "\n"
-    tikz_code += "\\end{tikzpicture}"
+    if root is None:
+        return (
+            "\\begin{TikzTreeStyle}\n"
+            "\\node {$\\varnothing$};\n"
+            "\\end{TikzTreeStyle}"
+        )
+
+    tikz_code = "\\begin{TikzTreeStyle}\n"
+    tikz_code += f"  \\node {{{root.value}}}\n"
+    if root.left or root.right:
+        tikz_code += tikz_node(root.left) + "\n"
+        tikz_code += tikz_node(root.right) + ";\n"
+    else:
+        tikz_code += ";\n"
+    tikz_code += "  \\path[draw=none] (0,-2) -- (0,14mm);\n"
+    tikz_code += "\\end{TikzTreeStyle}"
     return tikz_code
 
 
